@@ -1,0 +1,1 @@
+isdigit(static_cast<unsigned char>(c))
