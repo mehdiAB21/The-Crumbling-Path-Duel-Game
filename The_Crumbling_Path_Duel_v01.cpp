@@ -24,10 +24,13 @@ struct Cell {
     int occupant = 0;   // 0=empty | >0 = A pieces | <0 = B pieces   | ex: 1 = A piece | -1 = B piece
 };
 
+struct Piece {
+    int r, c;  
+};
 
 struct Player {
-    int x = 0, y = 0;   // location of player
     long long score = 0;
+    vector<Piece> pieces; // اندیس 1..x
 };
 
 // ---------- Helpers ----------
@@ -138,7 +141,7 @@ void PrintBoard(const vector<vector<char>>& board){
         cout << "\t\t";
         for(int j = 0; j < board[i].size(); j++){
             char c = board[i][j];
-            if(c == 'X' && board[i][j+1] == 'X'){
+            if(c == 'X' && j+1 < (int)board[i].size() && board[i][j+1] == 'X'){
                 cout << GRAY << "XX" << RESET;
                 j++;
                 continue;
@@ -147,12 +150,12 @@ void PrintBoard(const vector<vector<char>>& board){
                 cout << GRAY << c << RESET;
                 continue;
             }
-            else if(c == 'A'){
+            else if(c == 'A' && j+1 < (int)board[i].size()){
                 cout << RED << c << board[i][j+1] << RESET;
                 j++;
                 continue;
             }
-            else if(c == 'B'){
+            else if(c == 'B' && j+1 < (int)board[i].size()){
                 cout << BLUE << 'B' << board[i][j+1] << RESET;
                 j++;
                 continue;
@@ -169,45 +172,96 @@ void PrintBoard(const vector<vector<char>>& board){
     }
 }
 
-
-
-//!! TEST:
-
-void PlaceTestPlayers(vector<vector<Cell>>& grid){
-    // بازیکن ۱ (A)
-    grid[0][0].occupant = 1;   // A1
-    grid[1][2].occupant = 2;   // A2
-    grid[3][5].occupant = 3;   // A3
-
-    // بازیکن ۲ (B)
-    grid[0][5].occupant = -1;  // B1
-    grid[2][1].occupant = -2;  // B2
-    grid[3][0].occupant = -3;  // B3
-
-    // تست خانه تخریب‌شده
-    grid[1][4].destroyed = true;
+bool IsInside(int r, int c, int rows, int cols){
+    return r >= 0 && r < rows && c >= 0 && c < cols;
 }
 
+bool CanPlaceHere(const vector<vector<Cell>>& grid, int r, int c){
+    return !grid[r][c].destroyed && grid[r][c].occupant == 0;
+}
 
+//----------Place initial A and B-----------
+void PlaceInitialPieces_A_then_B(vector<vector<Cell>>& grid, vector<Piece>& piecesA, vector<Piece>& piecesB, int x){
+    int rows = (int)grid.size();
+    int cols = (int)grid[0].size();
 
+    piecesA.resize(x);
+    piecesB.resize(x);
+
+    // ---- Player A ----
+    cout << "\n--- Place Player A pieces ---\n";
+    for(int i = 0; i < x; ++i){
+        while(true){
+            int r, c;
+            cout << "Place A" << (i + 1) << " (row col): ";
+            cin >> r >> c;
+            
+
+            if(!IsInside(r,c,rows,cols) || grid[r][c].occupant != 0){
+                cout << "Invalid cell. Try again.\n";
+                continue;
+            }
+
+            grid[r][c].occupant = +(i + 1);
+            piecesA[i] = {r, c};
+            break;
+        }
+    }
+    // ---- Player B ----
+        cout << "\n--- Place Player B pieces ---\n";
+        for (int i = 0; i < x; i++)
+        {
+            while (true)
+            {
+                int r, c;
+                cout << "Place B" << (i + 1) << " (row col): ";
+                cin >> r >> c;
+                
+
+                if (!IsInside(r, c, rows, cols) ||
+                    grid[r][c].destroyed ||
+                    grid[r][c].occupant != 0)
+                {
+                    cout << "Invalid cell. Try again.\n";
+                    continue;
+                }
+
+                grid[r][c].occupant = -(i + 1);
+                piecesB[i] = {r, c};
+                break;
+            }
+        }
+}
 
 int main(){
     srand(time(0));
     ios::sync_with_stdio(false);
-    cin.tie(nullptr);
     
-    int rows = 6, cols = 10;
-
+    int rows = 6, cols = 10;  // default size
+    vector<Piece> piecesA, piecesB;
+    
+    cout << "Enter number of rows: " << endl;
+    cin >> rows;
+    cout << "Enter number of columns: " << endl;
+    cin >> cols;
     vector<vector<Cell>> grid(rows, vector<Cell>(cols));
-
     vector<vector<char>> board(4*rows + 1, vector<char>(5*cols + 1, ' '));
-    vector<vector<string>> Points(4, vector<string>(6));
 
 
-    CreateBoard(board, 6, 10);
-    RandomPoint(grid, 6, 10);
-    PlaceTestPlayers(grid); 
+    CreateBoard(board, rows, cols);
+    PrintBoard(board);
+    RandomPoint(grid, rows, cols);
     UpdateBoard(board, grid, rows, cols);
+
+    int x = 0;
+    cout << "Enter x (number of pieces per player, <= 9 recommended): " << endl;
+    cin >> x;
+
+
+    
+    PlaceInitialPieces_A_then_B(grid, piecesA, piecesB, x);
+    UpdateBoard(board, grid, rows, cols);
+    clearScreen();
     PrintBoard(board);
 
     
