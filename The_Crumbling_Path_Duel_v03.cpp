@@ -203,8 +203,8 @@ bool CanPlaceHere(const vector<vector<Cell>>& grid, int r, int c){
 void PrintHeader(time_t Begin, int Round_time, int Score_P1, int Score_P2){
 	ShowTime(Begin);
 	cout <<" | Turn Player ";
-	if(Round_time%2==1)	cout << RED << "1 (P1) | " << RESET;
-	else cout << BLUE <<"2 (P2) | " << RESET;
+	if(Round_time%2==1)	cout << RED << "1 (P1) " << RESET << "| ";
+	else cout << BLUE <<"2 (P2) " << RESET << "| ";
 	cout <<"Score P1: "<<Score_P1<<" | Score P2: "<<Score_P2<<endl;
 	cout<<"****************************************************************\n";
 	cout<<"****************************************************************\n";
