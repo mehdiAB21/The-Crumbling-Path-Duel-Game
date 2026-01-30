@@ -211,7 +211,7 @@ void PlaceInitialPieces_A_then_B(vector<vector<Cell>>& grid, vector<Piece>& piec
             }
 
             grid[r][c].occupant = +(i + 1);
-            piecesA[i] = {i ,r, c};
+            piecesA[i] = {i + 1 ,r, c};
             break;
         }
     }
@@ -228,7 +228,7 @@ void PlaceInitialPieces_A_then_B(vector<vector<Cell>>& grid, vector<Piece>& piec
                 continue;
             }
             grid[r][c].occupant = -(i + 1);
-            piecesB[i] = {i ,r, c};
+            piecesB[i] = {-(i + 1) ,r, c};
             break;    
         }
     }
@@ -301,10 +301,38 @@ bool MovePieceByDir(vector<vector<Cell>> &grid, Piece &piece, int &score, char d
     piece.r = destR;
     piece.c = destC;
     
-    grid[destR][destC].occupant = (piece.id >= 0) ? +(piece.id + 1) : -(piece.id + 1);
+    grid[destR][destC].occupant = piece.id;
 
     return true;
 }
+//--------- Can move? -----------
+bool HasAnyMove(const vector<vector<Cell>>& grid, const Piece& p)
+{
+    const char dirs[4] = {'u', 'd', 'l', 'r'};
+
+    for (char d : dirs) {
+        int steps = 1;
+
+        while (true) {
+            if (!IsPathClearDir(grid, p.r, p.c, d, steps))
+                break;  // Can't move
+
+            return true; // Can move at least one step
+        }
+    }
+    return false;
+}
+
+bool IsPlayerTrapped(const vector<vector<Cell>>& grid, const vector<Piece>& pieces)
+{
+    for (const Piece& p : pieces) {
+        if (HasAnyMove(grid, p))
+            return false; // At least one piece can move
+    }
+    return true; // No pieces can move
+}
+
+
 
 int main()
 {
@@ -340,11 +368,15 @@ int main()
     clearScreen();
     PrintBoard(board);
 
-    while (round_Num < 10){
+    while (true){
         int id, steps;
         char dir;
 
         if (round_Num % 2 != 0){
+            if (IsPlayerTrapped(grid, piecesA)){
+                cout << "\nGame Over! Player A has no moves.\n";
+                break;
+            }
             cout << RED << "Player A: \n" << RESET;
             cout << "Select one of your piece:... ";
             cin >> id;
@@ -357,6 +389,8 @@ int main()
             cin >> steps;
 
             if (!MovePieceByDir(grid, piecesA[id], scoreA, dir, steps)){
+                clearScreen();
+                PrintBoard(board);
                 cout << "Invalid move!\n";
                 continue;
             }
@@ -367,6 +401,10 @@ int main()
             cout << endl;
         }
         else if (round_Num % 2 == 0){
+            if (IsPlayerTrapped(grid, piecesB)) {
+                cout << "\nGame Over! Player B has no moves.\n";
+                break;
+            }
             cout << BLUE << "Player B \n:" << RESET;
             cout << "Select one of your piece:... ";
             cin >> id;
@@ -379,6 +417,8 @@ int main()
             cin >> steps;
 
             if (!MovePieceByDir(grid, piecesB[id], scoreB, dir, steps)){
+                clearScreen();
+                PrintBoard(board);
                 cout << "Invalid move!\n";
                 continue;
             }
@@ -389,8 +429,25 @@ int main()
             cout << endl;
         }
     }
-    
-    
-    
+
+    cout << "\nFinal Scores:\n";
+    cout << RED << "Player A: " << scoreA << RESET << endl;
+    cout << BLUE << "Player B: " << scoreB << RESET << endl;
+
+    if (scoreA > scoreB)
+        cout << RED << "Player A Wins!\n"
+             << RESET;
+    else if (scoreB > scoreA)
+        cout << BLUE << "Player B Wins!\n"
+             << RESET;
+    else{
+        if (round_Num % 2 == 0){
+            cout << " Draw! Last player wins, A.\n";
+        }else{
+            cout << " Draw! Last player wins, B.\n";
+        }
+
+    }
+
     return 0;
 }
